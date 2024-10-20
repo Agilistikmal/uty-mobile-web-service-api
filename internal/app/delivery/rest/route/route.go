@@ -10,12 +10,14 @@ type Route struct {
 	Mux *http.ServeMux
 
 	UserHandler *rest.UserHandler
+	OTPHandler  *rest.OTPHandler
 }
 
-func NewRoutes(userHandler *rest.UserHandler) *Route {
+func NewRoutes(userHandler *rest.UserHandler, otpHandler *rest.OTPHandler) *Route {
 	return &Route{
 		Mux:         http.NewServeMux(),
 		UserHandler: userHandler,
+		OTPHandler:  otpHandler,
 	}
 }
 
@@ -26,4 +28,5 @@ func (r *Route) Init() {
 func (r *Route) ProductRoutes() {
 	r.Mux.HandleFunc("POST /auth/register", r.UserHandler.Register)
 	r.Mux.HandleFunc("POST /auth/login", r.UserHandler.Login)
+	r.Mux.HandleFunc("POST /auth/otp", r.OTPHandler.Verify)
 }

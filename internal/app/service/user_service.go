@@ -31,6 +31,7 @@ func (s *UserService) Register(user *model.User) (*model.User, error) {
 	}
 
 	user.Password = string(hashPassword)
+	user.Verified = false
 
 	user, err = s.userRepository.Create(user)
 	return user, err

@@ -10,12 +10,14 @@ import (
 )
 
 type UserHandler struct {
-	service *service.UserService
+	service    *service.UserService
+	otpService *service.OTPService
 }
 
-func NewUserHandler(service *service.UserService) *UserHandler {
+func NewUserHandler(service *service.UserService, otpService *service.OTPService) *UserHandler {
 	return &UserHandler{
-		service: service,
+		service:    service,
+		otpService: otpService,
 	}
 }
 
@@ -28,6 +30,12 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err = h.service.Register(user)
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	_, err = h.otpService.Generate(user.Username)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return

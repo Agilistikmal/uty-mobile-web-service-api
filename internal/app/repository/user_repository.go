@@ -33,3 +33,12 @@ func (r *UserRepository) Find(username string) (*model.User, error) {
 
 	return user, nil
 }
+
+func (r *UserRepository) Update(username string, user *model.User) (*model.User, error) {
+	err := r.db.Where("username = ?", username).Updates(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

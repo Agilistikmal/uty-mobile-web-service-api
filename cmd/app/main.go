@@ -21,9 +21,15 @@ func main() {
 
 	userRepository := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepository, validate)
-	userHandler := rest.NewUserHandler(userService)
 
-	routes := route.NewRoutes(userHandler)
+	otpRepository := repository.NewOTPRepository(db)
+	otpService := service.NewOTPService(otpRepository, userRepository)
+
+	// REST Handler
+	userHandler := rest.NewUserHandler(userService, otpService)
+	otpHandler := rest.NewOTPHandler(otpService)
+
+	routes := route.NewRoutes(userHandler, otpHandler)
 	routes.Init()
 
 	log.Println("Running on http://localhost:8080")
