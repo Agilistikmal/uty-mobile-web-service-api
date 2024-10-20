@@ -3,20 +3,28 @@ package service
 import (
 	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/model"
 	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/repository"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
 	userRepository *repository.UserRepository
+	validate       *validator.Validate
 }
 
-func NewUserService(userRepository *repository.UserRepository) *UserService {
+func NewUserService(userRepository *repository.UserRepository, validate *validator.Validate) *UserService {
 	return &UserService{
 		userRepository: userRepository,
+		validate:       validate,
 	}
 }
 
-func (s *UserService) Create(user *model.User) (*model.User, error) {
+func (s *UserService) Register(user *model.User) (*model.User, error) {
+	err := s.validate.Struct(user)
+	if err != nil {
+		return nil, err
+	}
+
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
 		return nil, err
