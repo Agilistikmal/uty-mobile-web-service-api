@@ -1,6 +1,9 @@
 package service
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/model"
 	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/repository"
 	"github.com/go-playground/validator/v10"
@@ -43,9 +46,28 @@ func (s *UserService) Login(username string, password string) (*model.User, erro
 		return nil, err
 	}
 
+	now := time.Now()
+	difference := now.Sub(user.LockedAt)
+	retrySeconds := 10
+
+	if difference < time.Duration(retrySeconds)*time.Second {
+		return nil, fmt.Errorf("account locked, please wait %ds", retrySeconds-int(difference.Seconds()))
+	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return nil, err
+		maxRetry := 3
+		if *user.PasswordRetry < maxRetry {
+			*user.PasswordRetry += 1
+		} else {
+			*user.PasswordRetry = 0
+			user.LockedAt = time.Now()
+		}
+		_, err := s.userRepository.Update(user.Username, user)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("invalid password (%d/3)", *user.PasswordRetry)
 	}
 
 	return user, nil
