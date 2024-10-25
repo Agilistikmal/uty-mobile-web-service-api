@@ -1,5 +1,4 @@
-# Pertemuan 5 
-
+# Pertemuan 5 <!-- omit in toc -->
 ## Data diri
 
 | Nama                | NPM        |
@@ -10,15 +9,38 @@
 
 ## Daftar Isi
 
-- [Pertemuan 5](#pertemuan-5)
-  - [Data diri](#data-diri)
-  - [Daftar Isi](#daftar-isi)
-  - [Design Figma](#design-figma)
-  - [REST API](#rest-api)
-    - [HTTP Methods](#http-methods)
-      - [GET](#get)
-        - [GET /users](#get-users)
-  - [API User Login](#api-user-login)
+- [Data diri](#data-diri)
+- [Daftar Isi](#daftar-isi)
+- [Design Figma](#design-figma)
+- [REST API](#rest-api)
+  - [HTTP Methods](#http-methods)
+    - [GET](#get)
+      - [GET /user](#get-user)
+      - [GET /user/:username](#get-userusername)
+    - [POST](#post)
+      - [POST /user](#post-user)
+    - [PUT](#put)
+      - [PUT /user/:username](#put-userusername)
+    - [PATCH](#patch)
+      - [PATCH /user/:username](#patch-userusername)
+    - [DELETE](#delete)
+      - [DELETE /user/:username](#delete-userusername)
+- [API User Login](#api-user-login)
+  - [Struktur Folder](#struktur-folder)
+  - [Model](#model)
+    - [User Model](#user-model)
+    - [Response Model](#response-model)
+  - [Repository](#repository)
+  - [Service](#service)
+  - [Delivery REST API Handler](#delivery-rest-api-handler)
+    - [user\_handler.go](#user_handlergo)
+    - [route.go](#routego)
+  - [Main](#main)
+  - [Testing Postman](#testing-postman)
+    - [Register - Error Validation](#register---error-validation)
+    - [Register - Success](#register---success)
+    - [Login - Error Invalid Password](#login---error-invalid-password)
+    - [Login - Success](#login---success)
 
 
 ## Design Figma
@@ -218,7 +240,8 @@ Saya membuat API untuk user melakukan login menggunakan Golang. <br>
 Berikut adalah struktur folder untuk membuat REST API di Golang.
 
 <p align="center">
-  <img src="./assets/struktur.png" />
+  <img src="./assets/struktur.png" align="top" />
+  <img src="./assets/struktur2.png" align="top" />
 <p>
 
 ### Model
@@ -393,9 +416,28 @@ func (s *UserService) Login(username string, password string) (*model.User, erro
 		return nil, err
 	}
 
-	// Melakukan pengecekan apakah password match
+	now := time.Now()
+	difference := now.Sub(user.LockedAt)
+	retrySeconds := 10
+
+	if difference < time.Duration(retrySeconds)*time.Second {
+		return nil, fmt.Errorf("account locked, please wait %ds", retrySeconds-int(difference.Seconds()))
+	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
+		// Untuk melakukan locking jika 3x password salah
+		maxRetry := 3
+		if *user.PasswordRetry < maxRetry {
+			*user.PasswordRetry += 1
+		} else {
+			*user.PasswordRetry = 0
+			user.LockedAt = time.Now()
+		}
+		_, err := s.userRepository.Update(user.Username, user)
+		if err != nil {
+			return nil, err
+		}
 		return nil, fmt.Errorf("invalid password (%d/3)", *user.PasswordRetry)
 	}
 
@@ -558,3 +600,35 @@ func main() {
 }
 
 ```
+
+### Testing Postman
+
+#### Register - Error Validation
+
+Disini mencoba untuk validasi, berhasil terlihat bahwa password tidak memenuhi minimal 8 karakter.
+
+<p align="center">
+  <img src="./assets/reg1.png" />
+<p>
+
+#### Register - Success
+
+Setelah valid, maka akan berhasil melakukan registrasi seperti berikut.
+
+<p align="center">
+  <img src="./assets/reg2.png" />
+<p>
+
+#### Login - Error Invalid Password
+
+Terdapat pesan peringatan saat password salah. Setelah 3x maka akun akan di lock selama 30 detik.
+
+<p align="center">
+  <img src="./assets/log1.png" />
+<p>
+
+#### Login - Success
+
+<p align="center">
+  <img src="./assets/log2.png" />
+<p>

@@ -62,6 +62,7 @@ func (s *UserService) Login(username string, password string) (*model.User, erro
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
+		// Untuk melakukan locking jika 3x password salah
 		maxRetry := 3
 		if *user.PasswordRetry < maxRetry {
 			*user.PasswordRetry += 1
