@@ -11,8 +11,10 @@ import (
 )
 
 type UserService struct {
+	// Inject user repository untuk mengakses user
 	userRepository *repository.UserRepository
-	validate       *validator.Validate
+	// Validate untuk melakukan validasi data
+	validate *validator.Validate
 }
 
 func NewUserService(userRepository *repository.UserRepository, validate *validator.Validate) *UserService {
@@ -23,11 +25,14 @@ func NewUserService(userRepository *repository.UserRepository, validate *validat
 }
 
 func (s *UserService) Register(user *model.User) (*model.User, error) {
+	// Melakukan validasi data user
+	// apakah sesuai dengan kontrak yang dibuat di model.
 	err := s.validate.Struct(user)
 	if err != nil {
 		return nil, err
 	}
 
+	// Melakukan hashing password menggunakan bcrypt
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
 		return nil, err
@@ -41,6 +46,7 @@ func (s *UserService) Register(user *model.User) (*model.User, error) {
 }
 
 func (s *UserService) Login(username string, password string) (*model.User, error) {
+	// Mencari data user
 	user, err := s.userRepository.Find(username)
 	if err != nil {
 		return nil, err

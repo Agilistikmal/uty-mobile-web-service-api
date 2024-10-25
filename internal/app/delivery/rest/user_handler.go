@@ -22,6 +22,7 @@ func NewUserHandler(service *service.UserService, otpService *service.OTPService
 }
 
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
+	// Melakukan konversi request body JSON ke struct model user
 	var user *model.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -29,6 +30,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Melakukan registrasi user
 	user, err = h.service.Register(user)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
@@ -45,6 +47,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	// Melakukan konversi request body JSON ke struct model user
 	var user *model.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -52,6 +55,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Melakukan login
 	user, err = h.service.Login(user.Username, user.Password)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())

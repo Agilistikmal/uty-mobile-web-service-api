@@ -210,3 +210,351 @@ Contoh Response:
 ```
 
 ## API User Login
+
+Saya membuat API untuk user melakukan login menggunakan Golang. <br>
+
+### Struktur Folder
+
+Berikut adalah struktur folder untuk membuat REST API di Golang.
+
+<p align="center">
+  <img src="./assets/struktur.png" />
+<p>
+
+### Model
+
+Mempersiapkan model untuk disimpan di database dan ditampilkan sebagai response. <br>
+
+Saya menggunakan GORM sebagai ORM (Object Relational Mapping) untuk membuat tabel di database berdasarkan struct golang.
+
+#### User Model
+```go
+package model
+
+import "time"
+
+type User struct {
+	Username      string    `json:"username,omitempty" gorm:"primaryKey" validate:"required,min=3,max=20"`
+	FullName      string    `json:"full_name,omitempty" validate:"required,min=3,max=50"`
+	Phone         string    `json:"phone,omitempty" validate:"required,e164"`
+	Password      string    `json:"password,omitempty" validate:"required,min=8"`
+	PasswordRetry *int      `json:"password_retry,omitempty" gorm:"default:0"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
+	UpdatedAt     time.Time `json:"updated_at,omitempty"`
+}
+```
+
+#### Response Model
+
+Response model digunakan untuk menampilkan response dalam bentuk JSON kepada client.
+
+```go
+package model
+
+type Response struct {
+	Success bool   `json:"success,omitempty"`
+	Code    int    `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
+	Data    any    `json:"data,omitempty"`
+}
+
+```
+
+Contoh Response:
+
+```json
+{
+  "success": true,
+  "code": 200,
+  "message": "ok",
+  "data": {
+    "username": "agilistikmal",
+    ...
+  }
+}
+```
+
+### Repository
+
+Folder repository berisi repository sebagai penghubung ke database.
+
+```go
+package repository
+
+import (
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/model"
+	"gorm.io/gorm"
+)
+
+// Struct User Repository
+type UserRepository struct {
+	// Field db untuk mengakses database
+	db *gorm.DB
+}
+
+// Constructor untuk membuat user repository
+func NewUserRepository(db *gorm.DB) *UserRepository {
+	return &UserRepository{
+		db: db,
+	}
+}
+
+// Untuk membuat user baru
+func (r *UserRepository) Create(user *model.User) (*model.User, error) {
+	// Argumen user akan dibuat ke database
+	// lalu akan diperbarui datanya saat selesai dibuat
+	err := r.db.Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// Untuk mencari user berdasarkan username
+func (r *UserRepository) Find(username string) (*model.User, error) {
+	// Membuat variable untuk menyimpan data user
+	var user *model.User
+	err := r.db.Take(&user, "username = ?", username).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// Untuk mengupdate user
+func (r *UserRepository) Update(username string, user *model.User) (*model.User, error) {
+	err := r.db.Where("username = ?", username).Updates(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+```
+
+### Service
+
+Service digunakan untuk business logic aplikasi. Contohnya untuk user service akan menangani logic untuk melakukan login, register, besereta validasi.
+
+```go
+package service
+
+import (
+	"fmt"
+
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/model"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/repository"
+	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type UserService struct {
+	// Inject user repository untuk mengakses user
+	userRepository *repository.UserRepository
+	// Validate untuk melakukan validasi data
+	validate *validator.Validate
+}
+
+func NewUserService(userRepository *repository.UserRepository, validate *validator.Validate) *UserService {
+	return &UserService{
+		userRepository: userRepository,
+		validate:       validate,
+	}
+}
+
+func (s *UserService) Register(user *model.User) (*model.User, error) {
+	// Melakukan validasi data user
+	// apakah sesuai dengan kontrak yang dibuat di model.
+	err := s.validate.Struct(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// Melakukan hashing password menggunakan bcrypt
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = string(hashPassword)
+	user.Verified = false
+
+	user, err = s.userRepository.Create(user)
+	return user, err
+}
+
+func (s *UserService) Login(username string, password string) (*model.User, error) {
+	// Mencari data user
+	user, err := s.userRepository.Find(username)
+	if err != nil {
+		return nil, err
+	}
+
+	// Melakukan pengecekan apakah password match
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, fmt.Errorf("invalid password (%d/3)", *user.PasswordRetry)
+	}
+
+	return user, nil
+}
+
+```
+
+### Delivery REST API Handler
+
+Berikutnya adalah menghandle request dari client dan meneruskan ke service lalu mengembalikan hasilnya dengan response.
+
+#### user_handler.go
+
+Pada file ini berisikan logic saat request diterima dan apa yang dilakukan setelah request diterima.
+
+```go
+package rest
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/model"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/service"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/pkg"
+)
+
+type UserHandler struct {
+	service    *service.UserService
+	otpService *service.OTPService
+}
+
+func NewUserHandler(service *service.UserService, otpService *service.OTPService) *UserHandler {
+	return &UserHandler{
+		service:    service,
+		otpService: otpService,
+	}
+}
+
+func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
+	// Melakukan konversi request body JSON ke struct model user
+	var user *model.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		pkg.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Melakukan registrasi user
+	user, err = h.service.Register(user)
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	pkg.SendSuccess(w, user)
+}
+
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	// Melakukan konversi request body JSON ke struct model user
+	var user *model.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		pkg.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Melakukan login
+	user, err = h.service.Login(user.Username, user.Password)
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	pkg.SendSuccess(w, user)
+}
+
+```
+
+#### route.go
+
+File ini untuk mendaftarkan routing dengan method dan endpoint tertentu.
+
+```go
+package route
+
+import (
+	"net/http"
+
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/delivery/rest"
+)
+
+type Route struct {
+	Mux *http.ServeMux
+
+	UserHandler *rest.UserHandler
+}
+
+func NewRoutes(userHandler *rest.UserHandler, otpHandler *rest.OTPHandler) *Route {
+	return &Route{
+		Mux:         http.NewServeMux(),
+		UserHandler: userHandler,
+	}
+}
+
+func (r *Route) Init() {
+	r.ProductRoutes()
+}
+
+func (r *Route) ProductRoutes() {
+	// Mendaftarkan user handler dengan endpoint
+	r.Mux.HandleFunc("POST /auth/register", r.UserHandler.Register)
+	r.Mux.HandleFunc("POST /auth/login", r.UserHandler.Login)
+}
+
+```
+
+### Main
+
+Pada akhirnya, semuanya dijahit dalam file `main.go` untuk menjalankan keseluruhannya.
+
+```go
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/delivery/rest"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/delivery/rest/route"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/repository"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/service"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/infrastructure/config"
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/infrastructure/database"
+	"github.com/go-playground/validator/v10"
+)
+
+func main() {
+        // Memuat configurasi config.yml
+	config.NewConfig()
+
+        // Inisialisasi database dan validator
+	db := database.NewDatabase()
+	validate := validator.New()
+
+        // Inject repository dan service
+	userRepository := repository.NewUserRepository(db)
+	userService := service.NewUserService(userRepository, validate)
+
+	// REST Handler
+	userHandler := rest.NewUserHandler(userService, otpService)
+
+	routes := route.NewRoutes(userHandler)
+	routes.Init()
+
+        // Menjalankan di port 8080
+	log.Println("Running on http://localhost:8080")
+	http.ListenAndServe(":8080", routes.Mux)
+}
+
+```

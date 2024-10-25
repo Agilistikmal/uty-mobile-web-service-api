@@ -26,6 +26,7 @@ func (r *Route) Init() {
 }
 
 func (r *Route) ProductRoutes() {
+	// Mendaftarkan user handler dengan endpoint
 	r.Mux.HandleFunc("POST /auth/register", r.UserHandler.Register)
 	r.Mux.HandleFunc("POST /auth/login", r.UserHandler.Login)
 	r.Mux.HandleFunc("POST /auth/otp", r.OTPHandler.Verify)
