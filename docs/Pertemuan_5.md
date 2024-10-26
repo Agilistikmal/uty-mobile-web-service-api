@@ -45,6 +45,17 @@
 
 ## Design Figma
 
+Figma adalah salah satu aplikasi yang dapat digunakan untuk membuat design mobile. Figma dapat diakses melalui website [figma.com](https://figma.com) maupun aplikasi desktop.
+
+<p align="center">
+  <img src="./assets/fig1.png" />
+<p>
+
+<p align="center">
+  <img src="./assets/login.png" height="600px" style="border: solid" />
+  <img src="./assets/home.png" height="600px"  style="border: solid"  />
+<p>
+
 ## REST API
 
 REST API atau RESTful API yang memiliki kepanjangan **RE**presentational **S**tate **T**ransfer adalah salah satu cara berkomunikasi antar client-server menggunakan protokol HTTP. <br>
