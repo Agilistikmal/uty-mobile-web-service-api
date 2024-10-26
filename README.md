@@ -8,7 +8,7 @@ Repository ini untuk menyimpan tugas setiap pertemuan.
 | ------------------- | ---------- |
 | Agil Ghani Istikmal | 5220411040 |
 
-Setiap pertemuan akan memiliki branch masing-masing atau dapat diakses melalui link dibawah ini.
+Setiap pertemuan dapat diakses melalui link dibawah ini.
 
 ---
 
@@ -19,4 +19,4 @@ Setiap pertemuan akan memiliki branch masing-masing atau dapat diakses melalui l
 **Pertemuan 5** <br>
 Tanggal 17 Oktober 2024 <br>
 
-- [Branch Pertemuan 5](https://github.com/Agilistikmal/uty-mobile-web-service-api/blob/Pertemuan-5)
+- [Laporan Pertemuan 5](https://github.com/Agilistikmal/uty-mobile-web-service-api/blob/master/docs/Pertemuan_5.md)
