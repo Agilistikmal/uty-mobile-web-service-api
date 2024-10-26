@@ -52,8 +52,8 @@ Figma adalah salah satu aplikasi yang dapat digunakan untuk membuat design mobil
 <p>
 
 <p align="center">
-  <img src="./assets/login.png" height="600px" style="border: solid" />
-  <img src="./assets/home.png" height="600px"  style="border: solid"  />
+  <img src="./assets/login.png" height="720px" style="border: solid" />
+  <img src="./assets/home.png" height="720px"  style="border: solid"  />
 <p>
 
 ## REST API
