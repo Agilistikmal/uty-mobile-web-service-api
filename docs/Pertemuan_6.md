@@ -144,6 +144,10 @@ func (s *OTPService) Generate(username string) (*model.OTP, error) {
 }
 ```
 
+<p align="center">
+	<img src="./assets/waha2.png" />
+</p>
+
 ## API Payment Gateway
 
 ## Integrasi Flutter dan API
