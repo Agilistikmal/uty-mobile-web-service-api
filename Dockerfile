@@ -1,4 +1,4 @@
-FROM golang:1.23.1-alpine3.20
+FROM golang:alpine
 
 RUN apk update && apk add chromium
 
@@ -8,6 +8,6 @@ COPY . .
 
 RUN go mod tidy 
 
-RUN go build -o binary .
+RUN go build -o binary ./cmd/app
 
 ENTRYPOINT ["/app/binary"]
