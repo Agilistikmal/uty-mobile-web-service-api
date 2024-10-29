@@ -13,23 +13,16 @@ import (
 )
 
 type OTPService struct {
-	otpRepository  *repository.OTPRepository
-	userRepository *repository.UserRepository
+	otpRepository *repository.OTPRepository
 }
 
-func NewOTPService(otpRepository *repository.OTPRepository, userRepository *repository.UserRepository) *OTPService {
+func NewOTPService(otpRepository *repository.OTPRepository) *OTPService {
 	return &OTPService{
-		otpRepository:  otpRepository,
-		userRepository: userRepository,
+		otpRepository: otpRepository,
 	}
 }
 
-func (s *OTPService) Generate(username string) (*model.OTP, error) {
-	user, err := s.userRepository.Find(username)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *OTPService) Generate(user *model.User) (*model.OTP, error) {
 	otp, err := s.otpRepository.Create(user.Username)
 	if err != nil {
 		return nil, err
@@ -64,22 +57,15 @@ func (s *OTPService) Generate(username string) (*model.OTP, error) {
 	return otp, nil
 }
 
-func (s *OTPService) Verify(username string, code string) (*model.User, error) {
+func (s *OTPService) Verify(username string, code string) error {
 	otp, err := s.otpRepository.Find(username)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("invalid user")
 	}
 
 	if otp.Code != code {
-		return nil, fmt.Errorf("invalid code")
+		return fmt.Errorf("invalid code")
 	}
 
-	user, err := s.userRepository.Update(username, &model.User{
-		Verified: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return nil
 }

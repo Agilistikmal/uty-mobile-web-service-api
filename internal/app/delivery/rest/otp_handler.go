@@ -27,11 +27,11 @@ func (h *OTPHandler) Verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.service.Verify(otp.Username, otp.Code)
+	err = h.service.Verify(otp.Username, otp.Code)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	pkg.SendSuccess(w, user)
+	pkg.SendSuccess(w, nil)
 }

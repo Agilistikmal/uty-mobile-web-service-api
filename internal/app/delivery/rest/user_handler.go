@@ -37,7 +37,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.otpService.Generate(user.Username)
+	_, err = h.otpService.Generate(user)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return
@@ -57,6 +57,12 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Melakukan login
 	user, err = h.service.Login(user.Username, user.Password)
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	_, err = h.otpService.Generate(user)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return

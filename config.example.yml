@@ -1,0 +1,16 @@
+postgres:
+  dsn: "host=localhost user=stech password=stech dbname=mobileweb port=5432 sslmode=disable TimeZone=Asia/Jakarta"
+waha:
+  base_url: "..."
+otp:
+  message: |
+    Hai *{{ .Username }}*,
+
+    Berikut adalah kode OTP untuk verifikasi akun kamu.
+
+    Kode: *{{ .Code }}*
+
+    _Rahasia! Jangan berikan kode ini ke siapapun!_
+    _Kode berlaku selama 10 menit_
+xendit:
+  secret_key: "..."
