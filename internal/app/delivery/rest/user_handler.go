@@ -70,3 +70,16 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	pkg.SendSuccess(w, user)
 }
+
+func (h *UserHandler) Find(w http.ResponseWriter, r *http.Request) {
+	username := r.PathValue("username")
+
+	// Mencari user
+	user, err := h.service.Find(username)
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	pkg.SendSuccess(w, user)
+}

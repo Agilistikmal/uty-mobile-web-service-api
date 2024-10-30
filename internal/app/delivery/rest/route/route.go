@@ -31,6 +31,8 @@ func (r *Route) ProductRoutes() {
 	// Mendaftarkan user handler dengan endpoint
 	r.Mux.HandleFunc("POST /auth/register", r.UserHandler.Register)
 	r.Mux.HandleFunc("POST /auth/login", r.UserHandler.Login)
+	r.Mux.HandleFunc("GET /user/{username}", r.UserHandler.Find)
+
 	r.Mux.HandleFunc("POST /auth/otp", r.OTPHandler.Verify)
 
 	r.Mux.HandleFunc("POST /payment", r.PaymentHandler.Create)

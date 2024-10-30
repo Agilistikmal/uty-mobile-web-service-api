@@ -79,3 +79,13 @@ func (s *UserService) Login(username string, password string) (*model.User, erro
 
 	return user, nil
 }
+
+func (s *UserService) Find(username string) (*model.User, error) {
+	// Mencari data user
+	user, err := s.userRepository.Find(username)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

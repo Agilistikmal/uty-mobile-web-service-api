@@ -1,5 +1,8 @@
 # Pertemuan 6 <!-- omit in toc -->
 
+Kode full untuk API (Go) ada di repository ini. <br>
+Kode full untuk Flutter cek di https://github.com/agilistikmal/idcardku
+
 ## Data diri
 
 | Nama                | NPM        |
@@ -214,6 +217,171 @@ func (s *OTPService) Generate(username string) (*model.OTP, error) {
 </p>
 
 ## API Payment Gateway
+
+Saya menggunakan [Xendit](https://xendit.co) sebagai Payment Gateway. <br>
+Dan menggunakan library [Xendit-Go](https://github.com/xendit/xendit-go) untuk menggunakannya di bahasa pemrograman Go.
+
+### Payment Model
+```go
+package model
+
+import "time"
+
+type Payment struct {
+	ID          string `json:"id,omitempty" gorm:"primaryKey"`
+	ReferenceID string `json:"reference_id,omitempty" gorm:"unique"`
+	Username    string `json:"username,omitempty"`
+	Url         string `json:"url,omitempty"`
+	Status      string `json:"status,omitempty"`
+	Amount      int
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+}
+
+```
+
+### Payment Repository
+
+```go
+package repository
+
+import (
+	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/model"
+	"gorm.io/gorm"
+)
+
+type PaymentRepository struct {
+	db *gorm.DB
+}
+
+func NewPaymentRepository(db *gorm.DB) *PaymentRepository {
+	return &PaymentRepository{
+		db: db,
+	}
+}
+
+func (s *PaymentRepository) Create(payment *model.Payment) (*model.Payment, error) {
+	err := s.db.Create(&payment).Error
+	if err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
+func (s *PaymentRepository) Update(id string, payment *model.Payment) (*model.Payment, error) {
+	err := s.db.Where("id = ?", id).Updates(&payment).Error
+	if err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
+func (s *PaymentRepository) FindByID(id string) (*model.Payment, error) {
+	var payment *model.Payment
+	err := s.db.Take(&payment, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+
+func (s *PaymentRepository) FindByReferenceID(referenceID string) (*model.Payment, error) {
+	var payment *model.Payment
+	err := s.db.Take(&payment, "reference_id = ?", referenceID).Error
+	if err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
+```
+
+### Payment Service - Create
+
+Membuat Invoice Xendit dan menyimpannya di database sebagai Payment.
+
+```go
+func (s *PaymentService) Create(payment *model.Payment) (*model.Payment, error) {
+	err := s.validator.Struct(payment)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.userRepository.Find(payment.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	// Membuat External ID/Reference ID dengan Prefix AGL-RaNdOmStr
+	referenceID := "AGL-" + pkg.RandomString(8)
+
+	createInvoiceRequest := *invoice.NewCreateInvoiceRequest(referenceID, float64(payment.Amount))
+
+	invoice, _, xdtErr := s.xenditClient.InvoiceApi.CreateInvoice(context.Background()).
+		CreateInvoiceRequest(createInvoiceRequest).
+		Execute()
+	if xdtErr != nil {
+		return nil, xdtErr
+	}
+
+	payment = &model.Payment{
+		ID:          *invoice.Id,
+		ReferenceID: invoice.ExternalId,
+		Url:         invoice.InvoiceUrl,
+		Username:    payment.Username,
+		Amount:      int(invoice.Amount),
+		Status:      "PENDING",
+	}
+
+	payment, err = s.paymentRepository.Create(payment)
+	if err != nil {
+		return nil, err
+	}
+
+	return payment, nil
+}
+```
+
+### Payment Service - Find
+
+Ini untuk mencari dan mengecek status pembayaran. Jika sudah dibayar, maka user akan menjadi verified.
+
+```go
+func (s *PaymentService) FindByReferenceID(referenceID string) (*model.Payment, error) {
+	payment, err := s.paymentRepository.FindByReferenceID(referenceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Jika pending, maka cek lagi statusnya
+	if payment.Status == "PENDING" {
+		invoice, _, _ := s.xenditClient.InvoiceApi.GetInvoiceById(context.Background(), payment.ID).Execute()
+		payment.Status = string(invoice.Status)
+		payment, err = s.paymentRepository.Update(payment.ID, payment)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Jika sudah PAID, maka update user menjadi Verified
+	if payment.Status == "PAID" {
+		user, err := s.userRepository.Find(payment.Username)
+		if err != nil {
+			return nil, err
+		}
+
+		if user.Verified == false {
+			user.Verified = true
+
+			_, err = s.userRepository.Update(user.Username, user)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return payment, nil
+}
+```
 
 ## Integrasi Flutter dan API
 
