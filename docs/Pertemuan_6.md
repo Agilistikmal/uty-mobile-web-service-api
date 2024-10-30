@@ -637,3 +637,12 @@ Future<void> check() async {
 	});
 }
 ```
+
+## Referensi
+
+https://developers.xendit.co/api-reference/ <br>
+https://github.com/xendit/xendit-go <br>
+https://docs.flutter.dev/ui/widgets <br>
+https://waha.devlike.pro/ <br>
+https://github.com/khannedy/golang-clean-architecture <br>
+https://gorm.io/ <br>
