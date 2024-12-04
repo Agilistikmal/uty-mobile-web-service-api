@@ -43,8 +43,25 @@ func (r *UserRepository) Find(username string) (*model.User, error) {
 }
 
 // Untuk mengupdate user
-func (r *UserRepository) Update(username string, user *model.User) (*model.User, error) {
-	err := r.db.Where("username = ?", username).Updates(&user).Error
+func (r *UserRepository) Update(username string, request *model.User) (*model.User, error) {
+
+	err := r.db.Where("username = ?", username).Updates(&request).Error
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := r.Find(username)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// Delete user
+func (r *UserRepository) Delete(username string) (*model.User, error) {
+	var user *model.User
+	err := r.db.Delete(&user, "username = ?", username).Error
 	if err != nil {
 		return nil, err
 	}

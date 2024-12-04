@@ -41,7 +41,7 @@ func (s *PaymentService) Create(payment *model.Payment) (*model.Payment, error) 
 
 	referenceID := "AGL-" + pkg.RandomString(8)
 
-	createInvoiceRequest := *invoice.NewCreateInvoiceRequest(referenceID, float64(payment.Amount))
+	createInvoiceRequest := *invoice.NewCreateInvoiceRequest(referenceID, float64(1000))
 
 	invoice, _, xdtErr := s.xenditClient.InvoiceApi.CreateInvoice(context.Background()).
 		CreateInvoiceRequest(createInvoiceRequest).

@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/agilistikmal/uty-mobile-web-service-api/internal/app/model"
@@ -31,19 +32,19 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Melakukan registrasi user
-	user, err = h.service.Register(user)
+	userResponse, err := h.service.Register(user)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	_, err = h.otpService.Generate(user)
+	_, err = h.otpService.Generate(userResponse)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	pkg.SendSuccess(w, user)
+	pkg.SendSuccess(w, fmt.Sprintf("OTP code has been sent to your WhatsApp (%s)", userResponse.Phone))
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -56,19 +57,19 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Melakukan login
-	user, err = h.service.Login(user.Username, user.Password)
+	userResponse, err := h.service.Login(user.Username, user.Password)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	_, err = h.otpService.Generate(user)
+	_, err = h.otpService.Generate(userResponse)
 	if err != nil {
 		pkg.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	pkg.SendSuccess(w, user)
+	pkg.SendSuccess(w, fmt.Sprintf("OTP code has been sent to your WhatsApp (%s)", userResponse.Phone))
 }
 
 func (h *UserHandler) Find(w http.ResponseWriter, r *http.Request) {
@@ -82,4 +83,36 @@ func (h *UserHandler) Find(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pkg.SendSuccess(w, user)
+}
+
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+	username := r.PathValue("username")
+
+	var request *model.UserUpdateRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		pkg.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Mengupdate user
+	user, err := h.service.Update(username, request)
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	pkg.SendSuccess(w, user)
+}
+
+func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	username := r.PathValue("username")
+
+	_, err := h.service.Delete(username)
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	pkg.SendSuccess(w, nil)
 }

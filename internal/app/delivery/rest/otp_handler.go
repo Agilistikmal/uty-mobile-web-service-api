@@ -10,12 +10,14 @@ import (
 )
 
 type OTPHandler struct {
-	service *service.OTPService
+	service     *service.OTPService
+	UserService *service.UserService
 }
 
-func NewOTPHandler(service *service.OTPService) *OTPHandler {
+func NewOTPHandler(service *service.OTPService, userService *service.UserService) *OTPHandler {
 	return &OTPHandler{
-		service: service,
+		service:     service,
+		UserService: userService,
 	}
 }
 
@@ -33,5 +35,11 @@ func (h *OTPHandler) Verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pkg.SendSuccess(w, nil)
+	userResponse, err := h.UserService.Find(otp.Username)
+	if err != nil {
+		pkg.SendError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	pkg.SendSuccess(w, userResponse)
 }

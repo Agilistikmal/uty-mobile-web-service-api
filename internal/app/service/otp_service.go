@@ -22,7 +22,7 @@ func NewOTPService(otpRepository *repository.OTPRepository) *OTPService {
 	}
 }
 
-func (s *OTPService) Generate(user *model.User) (*model.OTP, error) {
+func (s *OTPService) Generate(user *model.UserResponse) (*model.OTP, error) {
 	otp, err := s.otpRepository.Create(user.Username)
 	if err != nil {
 		return nil, err

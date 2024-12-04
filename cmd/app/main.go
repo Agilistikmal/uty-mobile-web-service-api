@@ -33,7 +33,7 @@ func main() {
 
 	// REST Handler
 	userHandler := rest.NewUserHandler(userService, otpService)
-	otpHandler := rest.NewOTPHandler(otpService)
+	otpHandler := rest.NewOTPHandler(otpService, userService)
 	paymentHandler := rest.NewPaymentHandler(paymentService)
 
 	routes := route.NewRoutes(userHandler, otpHandler, paymentHandler)
