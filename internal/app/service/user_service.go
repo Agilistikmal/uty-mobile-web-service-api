@@ -64,7 +64,10 @@ func (s *UserService) Register(user *model.User) (*model.UserResponse, error) {
 
 func (s *UserService) Login(username string, password string) (*model.UserResponse, error) {
 	// Mencari data user
-	user, _ := s.userRepository.Find(username)
+	user, err := s.userRepository.Find(username)
+	if err != nil {
+		return nil, fmt.Errorf("user not found")
+	}
 
 	now := time.Now()
 	difference := now.Sub(user.LockedAt)
@@ -74,7 +77,7 @@ func (s *UserService) Login(username string, password string) (*model.UserRespon
 		return nil, fmt.Errorf("account locked, please wait %ds", retrySeconds-int(difference.Seconds()))
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		// Untuk melakukan locking jika 3x password salah
 		maxRetry := 3
