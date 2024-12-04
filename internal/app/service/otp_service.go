@@ -49,6 +49,7 @@ func (s *OTPService) Generate(user *model.UserResponse) (*model.OTP, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 201 {
 		return nil, fmt.Errorf("failed to send otp")

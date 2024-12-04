@@ -6,7 +6,7 @@ type Payment struct {
 	ID          string `json:"id,omitempty" gorm:"primaryKey"`
 	ReferenceID string `json:"reference_id,omitempty" gorm:"unique"`
 	Username    string `json:"username,omitempty"`
-	Url         string `json:"url,omitempty"`
+	QrString    string `json:"qr_string,omitempty"`
 	Status      string `json:"status,omitempty"`
 	Amount      int
 	CreatedAt   time.Time `json:"created_at,omitempty"`
