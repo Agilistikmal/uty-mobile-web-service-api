@@ -12,14 +12,16 @@ type Route struct {
 	UserHandler    *rest.UserHandler
 	OTPHandler     *rest.OTPHandler
 	PaymentHandler *rest.PaymentHandler
+	PostHandler    *rest.PostHandler
 }
 
-func NewRoutes(userHandler *rest.UserHandler, otpHandler *rest.OTPHandler, PaymentHandler *rest.PaymentHandler) *Route {
+func NewRoutes(userHandler *rest.UserHandler, otpHandler *rest.OTPHandler, paymentHandler *rest.PaymentHandler, postHandler *rest.PostHandler) *Route {
 	return &Route{
 		Mux:            http.NewServeMux(),
 		UserHandler:    userHandler,
 		OTPHandler:     otpHandler,
-		PaymentHandler: PaymentHandler,
+		PaymentHandler: paymentHandler,
+		PostHandler:    postHandler,
 	}
 }
 
@@ -40,4 +42,10 @@ func (r *Route) ProductRoutes() {
 	r.Mux.HandleFunc("POST /payment", r.PaymentHandler.Create)
 	r.Mux.HandleFunc("GET /payment/id/{id}", r.PaymentHandler.FindByID)
 	r.Mux.HandleFunc("GET /payment/reference_id/{reference_id}", r.PaymentHandler.FindByReferenceID)
+
+	r.Mux.HandleFunc("POST /post", r.PostHandler.Create)
+	r.Mux.HandleFunc("PATCH /post/{id}", r.PostHandler.Update)
+	r.Mux.HandleFunc("DELETE /post/{id}", r.PostHandler.Delete)
+	r.Mux.HandleFunc("GET /post/{id}", r.PostHandler.FindByID)
+	r.Mux.HandleFunc("GET /post", r.PostHandler.FindMany)
 }

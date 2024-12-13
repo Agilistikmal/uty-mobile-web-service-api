@@ -31,12 +31,16 @@ func main() {
 	paymentRepository := repository.NewPaymentRepository(db)
 	paymentService := service.NewPaymentService(xenditClient, paymentRepository, userRepository, validate)
 
+	postRepository := repository.NewPostRepository(db)
+	postService := service.NewPostService(postRepository, validate)
+
 	// REST Handler
 	userHandler := rest.NewUserHandler(userService, otpService)
 	otpHandler := rest.NewOTPHandler(otpService, userService)
 	paymentHandler := rest.NewPaymentHandler(paymentService)
+	postHandler := rest.NewPostHandler(postService)
 
-	routes := route.NewRoutes(userHandler, otpHandler, paymentHandler)
+	routes := route.NewRoutes(userHandler, otpHandler, paymentHandler, postHandler)
 	routes.Init()
 
 	log.Println("Running on http://localhost:8080")

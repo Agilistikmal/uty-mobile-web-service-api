@@ -10,8 +10,8 @@ type User struct {
 	PasswordRetry *int      `json:"password_retry,omitempty" gorm:"default:0"`
 	Verified      bool      `json:"verified,omitempty" gorm:"default:false"`
 	LockedAt      time.Time `json:"locked_at,omitempty"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
-	UpdatedAt     time.Time `json:"updated_at,omitempty"`
+	CreatedAt     time.Time `json:"created_at,omitempty" gorm:"autoCreateTime"`
+	UpdatedAt     time.Time `json:"updated_at,omitempty" gorm:"autoUpdateTime"`
 }
 
 type UserResponse struct {
