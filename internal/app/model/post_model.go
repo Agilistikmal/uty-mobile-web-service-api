@@ -11,7 +11,7 @@ type Post struct {
 	Title          string    `json:"title,omitempty"`
 	Content        string    `json:"content,omitempty"`
 	AuthorUsername string    `json:"author_username,omitempty"`
-	Author         *User     `json:"author,omitempty" gorm:"foreignKey:AuthorUsername;references:Username"`
+	Author         *User     `json:"author,omitempty" gorm:"foreignKey:AuthorUsername;references:Username;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CreatedAt      time.Time `json:"created_at,omitempty" gorm:"autoCreateTime"`
 	UpdatedAt      time.Time `json:"updated_at,omitempty" gorm:"autoUpdateTime"`
 }

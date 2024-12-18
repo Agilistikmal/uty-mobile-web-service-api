@@ -34,7 +34,7 @@ func (r *Route) ProductRoutes() {
 	r.Mux.HandleFunc("POST /auth/register", r.UserHandler.Register)
 	r.Mux.HandleFunc("POST /auth/login", r.UserHandler.Login)
 	r.Mux.HandleFunc("GET /user/{username}", r.UserHandler.Find)
-	r.Mux.HandleFunc("GET /user", r.UserHandler.Find)
+	r.Mux.HandleFunc("GET /user", r.UserHandler.FindMany)
 	r.Mux.HandleFunc("PATCH /user/{username}", r.UserHandler.Update)
 	r.Mux.HandleFunc("DELETE /user/{username}", r.UserHandler.Delete)
 
