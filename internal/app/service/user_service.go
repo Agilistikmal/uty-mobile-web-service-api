@@ -131,6 +131,30 @@ func (s *UserService) Find(username string) (*model.UserResponse, error) {
 	return userResponse, nil
 }
 
+func (s *UserService) FindMany() ([]*model.UserResponse, error) {
+	users, err := s.userRepository.FindMany()
+	if err != nil {
+		return nil, err
+	}
+
+	var userResponses []*model.UserResponse
+	for _, user := range users {
+		userResponse := &model.UserResponse{
+			Username:      user.Username,
+			FullName:      user.FullName,
+			Phone:         user.Phone,
+			PasswordRetry: user.PasswordRetry,
+			Verified:      user.Verified,
+			LockedAt:      user.LockedAt,
+			CreatedAt:     user.CreatedAt,
+			UpdatedAt:     user.UpdatedAt,
+		}
+		userResponses = append(userResponses, userResponse)
+	}
+
+	return userResponses, nil
+}
+
 func (s *UserService) Update(username string, request *model.UserUpdateRequest) (*model.UserResponse, error) {
 	user := &model.User{
 		Username:      username,

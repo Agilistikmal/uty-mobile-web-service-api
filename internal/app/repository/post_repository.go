@@ -50,16 +50,23 @@ func (r *PostRepository) Delete(id string) (*model.Post, error) {
 
 func (r *PostRepository) FindByID(id string) (*model.Post, error) {
 	var post *model.Post
-	err := r.db.Take(&post, "id = ?", id).Error
+	err := r.db.Preload("Author").Take(&post, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
+
+	post.Author.Password = ""
 
 	return post, nil
 }
 
 func (r *PostRepository) FindMany() []*model.Post {
 	var posts []*model.Post
-	r.db.Find(&posts)
+	r.db.Preload("Author").Order("updated_at DESC").Find(&posts)
+
+	for _, post := range posts {
+		post.Author.Password = ""
+	}
+
 	return posts
 }

@@ -85,6 +85,16 @@ func (h *UserHandler) Find(w http.ResponseWriter, r *http.Request) {
 	pkg.SendSuccess(w, user)
 }
 
+func (h *UserHandler) FindMany(w http.ResponseWriter, r *http.Request) {
+	users, err := h.service.FindMany()
+	if err != nil {
+		pkg.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	pkg.SendSuccess(w, users)
+}
+
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	username := r.PathValue("username")
 

@@ -42,6 +42,17 @@ func (r *UserRepository) Find(username string) (*model.User, error) {
 	return user, nil
 }
 
+func (r *UserRepository) FindMany() ([]*model.User, error) {
+	// Membuat variable untuk menyimpan data user
+	var users []*model.User
+	err := r.db.Order("updated_at DESC").Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 // Untuk mengupdate user
 func (r *UserRepository) Update(username string, request *model.User) (*model.User, error) {
 
